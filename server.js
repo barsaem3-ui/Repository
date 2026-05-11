@@ -364,11 +364,15 @@ app.post('/login', async (req, res) => {
             .from('users')
             .select('*')
             .eq('username', id)
-            .eq('password', password)
             .single();
             
         if (error || !data) {
-            return res.status(401).json({ success: false, message: '아이디 또는 비밀번호가 일치하지 않습니다.' });
+            return res.status(401).json({ success: false, message: '존재하지 않는 아이디입니다.' });
+        }
+        
+        // Password check with strict string comparison
+        if (String(data.password).trim() !== String(password).trim()) {
+            return res.status(401).json({ success: false, message: '비밀번호가 틀립니다.(v3)' });
         }
         
         let permissions = data.role || '';
