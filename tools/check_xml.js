@@ -1,0 +1,1 @@
+const AdmZip = require("adm-zip"); const zip = new AdmZip("./pasco.xlsx"); const entries = zip.getEntries(); entries.forEach(e => { if(e.entryName.includes("drawing")) { console.log("--- " + e.entryName + " ---"); console.log(e.getData().toString("utf8").substring(0, 500)); } });

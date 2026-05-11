@@ -1,0 +1,1 @@
+const fs = require('fs'); const XLSX = require('./xlsx.js'); console.log('loading...'); try { const buf = fs.readFileSync('./pasco.xlsx'); const wb = XLSX.read(buf, {type: 'buffer'}); console.log('Sheets:', wb.SheetNames); } catch(e) { console.error('Error:', e.message); }
