@@ -141,8 +141,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
         const { error: updateError } = await supabase
             .from('items')
             .update({ 
-                images: updatedImages,
-                modifier: userId
+                images: updatedImages
             })
             .eq('id', itemId);
             
@@ -276,8 +275,7 @@ app.post('/delete-images-bulk', async (req, res) => {
         const { error: updateError } = await supabase
             .from('items')
             .update({ 
-                images: updatedImages,
-                modifier: userId
+                images: updatedImages
             })
             .eq('id', itemId);
             

@@ -67,13 +67,16 @@ async function init() {
 }
 
 // Search
-async function performSearch() {
+let savedScrollY = 0;
+async function performSearch(keepScroll = false) {
+    if (keepScroll) savedScrollY = window.scrollY;
     const query = elements.searchInput.value.trim();
     const sheet = elements.sheetSelect.value;
     
     // UI Update
     elements.loadingIndicator.classList.remove('hidden');
-    elements.resultsContainer.innerHTML = '';
+    // Only clear if not keeping scroll (to prevent jump)
+    if (!keepScroll) elements.resultsContainer.innerHTML = '';
     elements.resultCount.textContent = '...';
 
     try {
@@ -81,6 +84,7 @@ async function performSearch() {
         const data = await response.json();
         
         renderResults(data);
+        if (keepScroll) window.scrollTo(0, savedScrollY);
     } catch (error) {
         console.error('Search failed:', error);
         elements.resultsContainer.innerHTML = `<div class="empty-state"><p style="color:#ff6b6b;">검색 중 오류가 발생했습니다.</p></div>`;
@@ -139,12 +143,13 @@ function renderResults(data, append = false) {
         let imgHtml = '<div class="no-img">이미지 없음</div>';
         
         if (item.이미지 && Array.isArray(item.이미지) && item.이미지.length > 0) {
+            const imagesJson = JSON.stringify(item.이미지).replace(/"/g, '&quot;');
             imgHtml = item.이미지.map((img, imgIdx) => {
                 const imgSrc = img.url; // Use storage URL directly
                 return `
                     <div class="img-wrapper" style="position:relative; flex:1; height:100%;">
                         <input type="checkbox" class="img-selection-checkbox" data-id="${item.id}" data-img-name="${img.name}" onclick="event.stopPropagation()">
-                        <img src="${imgSrc}" alt="이미지" class="card-img" onclick="openModal('${imgSrc}')">
+                        <img src="${imgSrc}" alt="이미지" class="card-img" onclick="openModal(${imagesJson}, ${imgIdx})">
                         <div class="delete-x-btn" onclick="confirmDelete(event, ${item.id}, '${img.name}', ${globalIndex})">×</div>
                     </div>
                 `;
@@ -162,7 +167,7 @@ function renderResults(data, append = false) {
                 <div class="card-img-container ${item.이미지 && item.이미지.length > 1 ? 'multi-img' : ''}">
                     <span class="sheet-badge">${item.시트명 || '-'}</span>
                     ${imgHtml}
-                    <input type="file" id="file-input-${globalIndex}" style="display:none" multiple onchange="handleFileUpload(event, ${item.id})">
+                    <input type="file" id="file-input-${globalIndex}" style="display:none" multiple accept="image/*" onchange="handleFileUpload(event, ${item.id})">
                 </div>
                 <div class="card-content">
                     <div class="card-header-row">
@@ -179,7 +184,10 @@ function renderResults(data, append = false) {
                     </div>
                     <div class="info-row">
                         <span class="info-label">사용모델</span>
-                        <span class="info-value" ${rd ? '' : 'contenteditable="true" onblur="saveField(this, \'사용모델\')"'}>${item.사용모델 || ''}</span>
+                        <div class="info-value model-value-container" onclick="openModelEditor(this, ${item.id})" data-model="${(item.사용모델 || '').replace(/"/g, '&quot;')}">
+                            <span class="model-text">${item.사용모델 || ''}</span>
+                            <span class="model-count">(${(item.사용모델 || '').length})</span>
+                        </div>
                     </div>
                     <div class="info-row">
                         <span class="info-label">가격</span>
@@ -198,8 +206,6 @@ function renderResults(data, append = false) {
                         <label class="status-opt" title="수리전용"><input type="radio" name="status-${globalIndex}" value="수리전용" ${rd ? 'disabled' : 'onchange="updateStatus(this)"'} ${item['수리전용'] == 1 ? 'checked' : ''}><span class="opt-icon">🔧</span></label>
                         <label class="status-opt" title="단종"><input type="radio" name="status-${globalIndex}" value="단종" ${rd ? 'disabled' : 'onchange="updateStatus(this)"'} ${item['단종'] == 1 ? 'checked' : ''}><span class="opt-icon">🚫</span></label>
                     </div>
-
-                    ${item.수정자 ? `<div class="modifier-badge"><span class="modifier-icon">👤</span> <span class="modifier-label">수정자:</span> <span class="modifier-name">${item.수정자}</span></div>` : ''}
                 </div>
             </div>
         `;
@@ -282,17 +288,6 @@ window.updateStatus = async function updateStatus(radio) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: meta.id, field: status, value: 1, userId: currentUser ? currentUser.id : '' })
     });
-    
-    // Update modifier badge locally without flickering
-    if (currentUser) {
-        let badge = card.querySelector('.modifier-badge');
-        if (!badge) {
-            badge = document.createElement('div');
-            badge.className = 'modifier-badge';
-            card.querySelector('.card-content').appendChild(badge);
-        }
-        badge.innerHTML = `<span class="modifier-icon">👤</span> <span class="modifier-label">수정자:</span> <span class="modifier-name">${currentUser.id}</span>`;
-    }
 };
 
 // Image Management
@@ -319,7 +314,7 @@ window.handleFileUpload = async function(event, itemId) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            performSearch(); // Refresh results
+            performSearch(true); // Refresh results and keep scroll
         }
     })
     .catch(err => {
@@ -349,7 +344,7 @@ window.toggleDeleteMode = async function() {
                     body: JSON.stringify({ itemId, imageNames: grouped[itemId], userId: currentUser ? currentUser.id : '' })
                 });
             }
-            performSearch(); 
+            performSearch(true); 
         }
         document.body.classList.remove('delete-mode');
     } else {
@@ -426,9 +421,49 @@ window.openMemoEditor = function openMemoEditor(el, itemId) {
 };
 
 // Modal handling
-window.openModal = function(src) {
-    elements.modalImg.src = src;
+window.openModal = function(images, index) {
+    if (typeof images === 'string') {
+        images = [{ url: images }];
+        index = 0;
+    }
+    
+    window.modalImages = images;
+    window.currentModalIndex = index;
+
+    const updateView = (idx) => {
+        elements.modalImg.src = images[idx].url;
+        
+        // Update active thumbnail
+        const thumbs = document.querySelectorAll('.modal-thumb');
+        thumbs.forEach((t, i) => {
+            if (i === idx) t.classList.add('active');
+            else t.classList.remove('active');
+        });
+    };
+
+    updateView(index);
+    
+    // Render thumbnails
+    const thumbContainer = document.getElementById('modalThumbnails');
+    if (thumbContainer) {
+        thumbContainer.innerHTML = images.map((img, i) => `
+            <img src="${img.url}" class="modal-thumb ${i === index ? 'active' : ''}" 
+                 onclick="event.stopPropagation(); switchModalImage(${i})">
+        `).join('');
+    }
+    
     elements.modal.classList.add('show');
+}
+
+window.switchModalImage = function(index) {
+    window.currentModalIndex = index;
+    elements.modalImg.src = window.modalImages[index].url;
+    
+    const thumbs = document.querySelectorAll('.modal-thumb');
+    thumbs.forEach((t, i) => {
+        if (i === index) t.classList.add('active');
+        else t.classList.remove('active');
+    });
 }
 
 elements.closeBtn.onclick = function() {
@@ -664,6 +699,61 @@ function logout() {
 }
 
 // Event Listeners
+function openModelEditor(el, itemId) {
+    if (document.body.classList.contains('read-only-mode')) return;
+    
+    const existing = document.getElementById('floating-model-editor');
+    if (existing) existing.remove();
+    
+    const currentModel = el.getAttribute('data-model') || '';
+    const rect = el.getBoundingClientRect();
+    const editor = document.createElement('div');
+    editor.id = 'floating-model-editor';
+    editor.className = 'memo-editor-popup model-editor-popup'; // Reusing memo popup style
+    
+    // Position near the element
+    editor.style.left = `${Math.max(10, rect.left + window.scrollX - 50)}px`;
+    editor.style.top = `${rect.top + window.scrollY - 180}px`;
+    
+    editor.innerHTML = `
+        <div class="popup-header">사용모델 수정</div>
+        <textarea id="model-textarea" placeholder="사용모델을 입력하세요...">${currentModel}</textarea>
+        <div class="memo-editor-btns">
+            <button class="memo-save-btn">저장</button>
+            <button class="memo-cancel-btn">취소</button>
+        </div>
+    `;
+    document.body.appendChild(editor);
+    
+    const textarea = editor.querySelector('#model-textarea');
+    textarea.focus();
+    const len = textarea.value.length;
+    textarea.setSelectionRange(len, len);
+    
+    const saveModel = async () => {
+        const newModel = textarea.value.trim();
+        await fetch(`${API_BASE}/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: itemId, field: '사용모델', value: newModel, userId: currentUser ? currentUser.id : '' })
+        });
+        el.setAttribute('data-model', newModel);
+        el.querySelector('.model-text').textContent = newModel;
+        el.querySelector('.model-count').textContent = `(${newModel.length})`;
+        editor.remove();
+    };
+    
+    textarea.onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            saveModel();
+        }
+    };
+    
+    editor.querySelector('.memo-save-btn').onclick = saveModel;
+    editor.querySelector('.memo-cancel-btn').onclick = () => editor.remove();
+}
+
 elements.loginBtn.addEventListener('click', handleLogin);
 elements.loginPw.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleLogin();
