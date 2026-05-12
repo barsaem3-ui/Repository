@@ -987,22 +987,3 @@ window.saveUsers = async () => {
 };
 
 
-
- / /   T O P   B u t t o n   L o g i c 
- w i n d o w . s c r o l l T o T o p   =   f u n c t i o n ( )   { 
-         w i n d o w . s c r o l l T o ( { 
-                 t o p :   0 , 
-                 b e h a v i o r :   ' s m o o t h ' 
-         } ) ; 
- } ; 
- 
- w i n d o w . a d d E v e n t L i s t e n e r ( ' s c r o l l ' ,   ( )   = >   { 
-         c o n s t   t o p B t n   =   d o c u m e n t . g e t E l e m e n t B y I d ( ' s c r o l l T o p B t n ' ) ; 
-         i f   ( w i n d o w . s c r o l l Y   >   3 0 0 )   { 
-                 t o p B t n . c l a s s L i s t . a d d ( ' s h o w ' ) ; 
-         }   e l s e   { 
-                 t o p B t n . c l a s s L i s t . r e m o v e ( ' s h o w ' ) ; 
-         } 
- } ) ; 
-  
- 
