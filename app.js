@@ -186,7 +186,7 @@ function renderResults(data, append = false) {
                         <span class="info-label">사용모델</span>
                         <div class="info-value model-value-container" onclick="openModelEditor(this, ${item.id})" data-model="${(item.사용모델 || '').replace(/"/g, '&quot;')}">
                             <span class="model-text">${item.사용모델 || ''}</span>
-                            <span class="model-count">(${(item.사용모델 || '').length})</span>
+                            <span class="model-count">${(item.사용모델 || '').length}</span>
                         </div>
                     </div>
                     <div class="info-row">
@@ -734,9 +734,17 @@ function openModelEditor(el, itemId) {
         });
         el.setAttribute('data-model', newModel);
         el.querySelector('.model-text').textContent = newModel;
-        el.querySelector('.model-count').textContent = `(${newModel.length})`;
+        el.querySelector('.model-count').textContent = newModel.length;
         editor.remove();
     };
+
+    const autoResize = () => {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    };
+
+    textarea.addEventListener('input', autoResize);
+    autoResize(); // Initial resize
     
     textarea.onkeydown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
