@@ -107,6 +107,10 @@ let allData = [];
 
 // Render Results
 function renderResults(data, append = false) {
+    // Remove existing load-more button if any
+    const existingBtn = document.getElementById('load-more-btn');
+    if (existingBtn) existingBtn.remove();
+
     if (!append) {
         allData = data;
         currentPage = 1;
@@ -213,19 +217,34 @@ function renderResults(data, append = false) {
     }
 
     // Load More Button
-    let loadMoreBtn = document.getElementById('load-more-btn');
-    if (loadMoreBtn) loadMoreBtn.remove();
-
     if (end < data.length) {
         loadMoreBtn = document.createElement('button');
         loadMoreBtn.id = 'load-more-btn';
         loadMoreBtn.className = 'btn-load-more';
         loadMoreBtn.textContent = `더 보기 (${data.length - end}개 남음)`;
-        loadMoreBtn.onclick = () => {
-            currentPage++;
-            renderResults(allData, true);
+        
+        const loadNextPage = () => {
+            if (loadMoreBtn.disabled) return;
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.textContent = "불러오는 중...";
+            setTimeout(() => {
+                currentPage++;
+                renderResults(allData, true);
+            }, 100);
         };
+        
+        loadMoreBtn.onclick = loadNextPage;
         elements.resultsContainer.after(loadMoreBtn);
+
+        // Infinite Scroll: Trigger automatically when button enters view
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                loadNextPage();
+                observer.disconnect(); // Prevent multiple triggers
+            }
+        }, { threshold: 0.1 });
+        
+        observer.observe(loadMoreBtn);
     }
 }
 
@@ -263,7 +282,17 @@ window.updateStatus = async function updateStatus(radio) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: meta.id, field: status, value: 1, userId: currentUser ? currentUser.id : '' })
     });
-    performSearch(); // Refresh UI after status change
+    
+    // Update modifier badge locally without flickering
+    if (currentUser) {
+        let badge = card.querySelector('.modifier-badge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.className = 'modifier-badge';
+            card.querySelector('.card-content').appendChild(badge);
+        }
+        badge.innerHTML = `<span class="modifier-icon">👤</span> <span class="modifier-label">수정자:</span> <span class="modifier-name">${currentUser.id}</span>`;
+    }
 };
 
 // Image Management
@@ -384,10 +413,10 @@ window.openMemoEditor = function openMemoEditor(el, itemId) {
         await fetch(`${API_BASE}/update`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: itemId, field: '이미지', value: newMemo, userId: currentUser ? currentUser.id : '' }) // '이미지' column actually maps to memo in this setup
+            body: JSON.stringify({ id: itemId, field: 'memo', value: newMemo, userId: currentUser ? currentUser.id : '' })
         });
-        btn.setAttribute('data-memo', newMemo);
-        btn.innerHTML = newMemo || '메모를 입력하려면 클릭하세요...';
+        el.setAttribute('data-memo', newMemo);
+        el.innerHTML = newMemo || '메모를 입력하려면 클릭하세요...';
         editor.remove();
     };
     

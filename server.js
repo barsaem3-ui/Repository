@@ -166,7 +166,8 @@ app.post('/update', async (req, res) => {
             '재고확인': 'status_check_stock',
             '미확인': 'status_unconfirmed',
             '수리전용': 'status_repair_only',
-            '단종': 'status_discontinued'
+            '단종': 'status_discontinued',
+            'memo': 'modifier'
         };
         
         const dbField = fieldMap[field];
