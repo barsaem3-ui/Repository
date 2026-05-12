@@ -65,7 +65,7 @@ app.get('/search', async (req, res) => {
         }
         
         if (query) {
-            dbQuery = dbQuery.or(`product_name.ilike.%${query}%,item_code.ilike.%${query}%,model.ilike.%${query}%`);
+            dbQuery = dbQuery.or(`product_name.ilike.%${query}%,item_code.ilike.%${query}%,model.ilike.%${query}%,sheet_name.ilike.%${query}%`);
         }
         
         const { data, error } = await dbQuery.order('row_index', { ascending: true });
@@ -99,25 +99,32 @@ app.get('/search', async (req, res) => {
     }
 });
 
-app.post('/upload', upload.single('image'), async (req, res) => {
+app.post('/upload', upload.array('images'), async (req, res) => {
     const { itemId, userId } = req.body;
-    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+    if (!req.files || req.files.length === 0) return res.status(400).json({ success: false, message: 'No files uploaded' });
     
     try {
-        const fileContent = fs.readFileSync(req.file.path);
-        const fileName = `upload_${Date.now()}_${req.file.originalname.replace(/[^a-z0-9.]/gi, '_')}`;
+        const uploadedImages = [];
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('item-images')
-            .upload(fileName, fileContent, {
-                contentType: req.file.mimetype,
-                upsert: true
-            });
+        for (const file of req.files) {
+            const fileContent = fs.readFileSync(file.path);
+            const fileName = `upload_${Date.now()}_${Math.floor(Math.random() * 1000)}_${file.originalname.replace(/[^a-z0-9.]/gi, '_')}`;
             
-        if (uploadError) throw uploadError;
-        
-        const { data: publicUrlData } = supabase.storage.from('item-images').getPublicUrl(fileName);
-        const newImage = { name: fileName, url: publicUrlData.publicUrl };
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('item-images')
+                .upload(fileName, fileContent, {
+                    contentType: file.mimetype,
+                    upsert: true
+                });
+                
+            if (uploadError) throw uploadError;
+            
+            const { data: publicUrlData } = supabase.storage.from('item-images').getPublicUrl(fileName);
+            uploadedImages.push({ name: fileName, url: publicUrlData.publicUrl });
+            
+            // Clean up local temp file
+            try { fs.unlinkSync(file.path); } catch(e) {}
+        }
         
         // Update item in DB
         const { data: itemData, error: itemFetchError } = await supabase
@@ -129,7 +136,7 @@ app.post('/upload', upload.single('image'), async (req, res) => {
         if (itemFetchError) throw itemFetchError;
         
         const currentImages = itemData.images || [];
-        const updatedImages = [...currentImages, newImage];
+        const updatedImages = [...currentImages, ...uploadedImages];
         
         const { error: updateError } = await supabase
             .from('items')
@@ -141,11 +148,14 @@ app.post('/upload', upload.single('image'), async (req, res) => {
             
         if (updateError) throw updateError;
         
-        try { fs.unlinkSync(req.file.path); } catch(e) {}
-        res.json({ success: true, image: newImage });
+        res.json({ success: true, images: uploadedImages });
     } catch (e) {
         console.error('Upload error:', e);
-        if (req.file) try { fs.unlinkSync(req.file.path); } catch(err) {}
+        if (req.files) {
+            req.files.forEach(file => {
+                try { fs.unlinkSync(file.path); } catch(err) {}
+            });
+        }
         res.status(500).json({ success: false, message: e.message });
     }
 });

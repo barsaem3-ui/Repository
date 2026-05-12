@@ -162,7 +162,7 @@ function renderResults(data, append = false) {
                 <div class="card-img-container ${item.이미지 && item.이미지.length > 1 ? 'multi-img' : ''}">
                     <span class="sheet-badge">${item.시트명 || '-'}</span>
                     ${imgHtml}
-                    <input type="file" id="file-input-${globalIndex}" style="display:none" onchange="handleFileUpload(event, ${item.id})">
+                    <input type="file" id="file-input-${globalIndex}" style="display:none" multiple onchange="handleFileUpload(event, ${item.id})">
                 </div>
                 <div class="card-content">
                     <div class="card-header-row">
@@ -301,12 +301,14 @@ window.triggerUpload = function(index) {
 };
 
 window.handleFileUpload = async function(event, itemId) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    console.log('Upload started for item:', itemId);
+    console.log(`Upload started for item: ${itemId}, ${files.length} files`);
     const formData = new FormData();
-    formData.append('image', file);
+    for (let i = 0; i < files.length; i++) {
+        formData.append('images', files[i]);
+    }
     formData.append('itemId', itemId);
     if (currentUser) formData.append('userId', currentUser.id);
 
@@ -317,7 +319,7 @@ window.handleFileUpload = async function(event, itemId) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            performSearch(); // Refresh results without alert
+            performSearch(); // Refresh results
         }
     })
     .catch(err => {
