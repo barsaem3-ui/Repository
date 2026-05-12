@@ -370,10 +370,12 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ success: false, message: '존재하지 않는 아이디입니다.' });
         }
         
-        // Password check with strict string comparison
+        // Final strict password check
         if (String(data.password).trim() !== String(password).trim()) {
-            return res.status(401).json({ success: false, message: '비밀번호가 틀립니다.(v3)' });
+            return res.status(401).json({ success: false, message: '비밀번호가 정확하지 않습니다. 다시 확인해 주세요.' });
         }
+        
+        console.log(`[LOGIN SUCCESS] User: ${data.username} logged in at ${new Date().toISOString()}`);
         
         let permissions = data.role || '';
         let startDate = data.start_date || '';
