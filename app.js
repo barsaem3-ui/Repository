@@ -709,19 +709,14 @@ function openModelEditor(el, itemId) {
     const rect = el.getBoundingClientRect();
     const editor = document.createElement('div');
     editor.id = 'floating-model-editor';
-    editor.className = 'memo-editor-popup model-editor-popup'; // Reusing memo popup style
+    editor.className = 'model-editor-popup-minimal'; 
     
     // Position near the element
-    editor.style.left = `${Math.max(10, rect.left + window.scrollX - 50)}px`;
-    editor.style.top = `${rect.top + window.scrollY - 180}px`;
+    editor.style.left = `${Math.max(10, rect.left + window.scrollX - 20)}px`;
+    editor.style.top = `${rect.top + window.scrollY - 60}px`;
     
     editor.innerHTML = `
-        <div class="popup-header">사용모델 수정</div>
-        <textarea id="model-textarea" placeholder="사용모델을 입력하세요...">${currentModel}</textarea>
-        <div class="memo-editor-btns">
-            <button class="memo-save-btn">저장</button>
-            <button class="memo-cancel-btn">취소</button>
-        </div>
+        <textarea id="model-textarea" placeholder="사용모델 입력...">${currentModel}</textarea>
     `;
     document.body.appendChild(editor);
     
@@ -747,11 +742,21 @@ function openModelEditor(el, itemId) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             saveModel();
+        } else if (e.key === 'Escape') {
+            editor.remove();
         }
     };
-    
-    editor.querySelector('.memo-save-btn').onclick = saveModel;
-    editor.querySelector('.memo-cancel-btn').onclick = () => editor.remove();
+
+    // Close when clicking outside
+    setTimeout(() => {
+        const outsideClick = (ev) => {
+            if (!editor.contains(ev.target)) {
+                editor.remove();
+                document.removeEventListener('mousedown', outsideClick);
+            }
+        };
+        document.addEventListener('mousedown', outsideClick);
+    }, 10);
 }
 
 elements.loginBtn.addEventListener('click', handleLogin);

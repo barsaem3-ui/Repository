@@ -162,7 +162,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
 app.post('/update', async (req, res) => {
     const { id, field, value, userId } = req.body;
     try {
-        const updateData = { modifier: userId };
+        const updateData = {};
         
         // Map frontend fields to DB columns
         const fieldMap = {
