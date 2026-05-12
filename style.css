@@ -1459,46 +1459,48 @@ body.bulk-delete-active #bulkDeleteBtn {
     display: none !important;
 }
 
- / *   M o d a l   T h u m b n a i l s   * / 
- . m o d a l - t h u m b n a i l s   { 
-         d i s p l a y :   f l e x ; 
-         j u s t i f y - c o n t e n t :   c e n t e r ; 
-         g a p :   1 0 p x ; 
-         m a r g i n - t o p :   1 5 p x ; 
-         p a d d i n g :   1 0 p x ; 
-         o v e r f l o w - x :   a u t o ; 
-         m a x - w i d t h :   1 0 0 % ; 
- } 
- 
- . m o d a l - t h u m b   { 
-         w i d t h :   6 0 p x ; 
-         h e i g h t :   6 0 p x ; 
-         o b j e c t - f i t :   c o v e r ; 
-         b o r d e r - r a d i u s :   6 p x ; 
-         b o r d e r :   2 p x   s o l i d   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 1 ) ; 
-         c u r s o r :   p o i n t e r ; 
-         t r a n s i t i o n :   a l l   0 . 2 s   e a s e ; 
-         o p a c i t y :   0 . 6 ; 
- } 
- 
- . m o d a l - t h u m b : h o v e r   { 
-         o p a c i t y :   1 ; 
-         t r a n s f o r m :   t r a n s l a t e Y ( - 2 p x ) ; 
-         b o r d e r - c o l o r :   v a r ( - - p r i m a r y ) ; 
- } 
- 
- . m o d a l - t h u m b . a c t i v e   { 
-         o p a c i t y :   1 ; 
-         b o r d e r - c o l o r :   v a r ( - - p r i m a r y ) ; 
-         b o x - s h a d o w :   0   0   1 0 p x   v a r ( - - p r i m a r y ) ; 
- } 
-  
- 
- / *   A d j u s t   f o n t   s i z e   f o r   m o d e l   n a m e s   t o   p r e v e n t   c u t o f f   * / 
- . i n f o - v a l u e . m o d e l - v a l u e   { 
-         f o n t - s i z e :   0 . 7 5 r e m ; 
-         m a x - w i d t h :   7 5 % ; 
-         l i n e - h e i g h t :   1 . 2 ; 
- } 
-  
- 
+/* Floating TOP Button Styles */
+.scroll-top-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.8);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.scroll-top-btn.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.scroll-top-btn:hover {
+    transform: translateY(-5px) scale(1.1);
+    background: var(--primary);
+    box-shadow: 0 15px 35px rgba(0, 242, 254, 0.4);
+}
+
+.scroll-top-btn .top-text {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--primary);
+    transition: color 0.3s;
+}
+
+.scroll-top-btn:hover .top-text {
+    color: #0a192f;
+}

@@ -986,4 +986,20 @@ window.saveUsers = async () => {
     }
 };
 
+// TOP Button Logic
+window.scrollToTop = function() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+};
 
+window.addEventListener('scroll', () => {
+    const topBtn = document.getElementById('scrollTopBtn');
+    if (!topBtn) return;
+    if (window.scrollY > 300) {
+        topBtn.classList.add('show');
+    } else {
+        topBtn.classList.remove('show');
+    }
+});
