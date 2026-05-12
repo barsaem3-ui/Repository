@@ -181,7 +181,19 @@ app.post('/update', async (req, res) => {
         
         const dbField = fieldMap[field];
         if (dbField) {
-            updateData[dbField] = value;
+            // If updating a status field, reset other status fields first
+            const statusFields = [
+                'status_sell_ok', 'status_repair_sell', 'status_check_stock', 
+                'status_unconfirmed', 'status_repair_only', 'status_discontinued'
+            ];
+            
+            if (statusFields.includes(dbField)) {
+                statusFields.forEach(f => {
+                    updateData[f] = (f === dbField) ? 1 : 0;
+                });
+            } else {
+                updateData[dbField] = value;
+            }
         } else {
             return res.status(400).json({ success: false, message: 'Invalid field' });
         }

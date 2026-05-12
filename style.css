@@ -357,6 +357,14 @@ select:focus, input:focus {
     border-bottom: 1px dashed rgba(255,255,255,0.2);
     padding-bottom: 0.5rem;
     cursor: text;
+    transition: all 0.3s ease;
+}
+
+.card-title.discontinued {
+    text-decoration: line-through;
+    text-decoration-color: #ff4757;
+    color: #ff4757;
+    opacity: 0.7;
 }
 
 .title-actions {

@@ -171,7 +171,7 @@ function renderResults(data, append = false) {
                 </div>
                 <div class="card-content">
                     <div class="card-header-row">
-                        <h3 class="card-title" ${rd ? '' : 'contenteditable="true" onblur="saveField(this, \'품명\')"'}>${item.품명 || ''}</h3>
+                        <h3 class="card-title ${item['단종'] == 1 ? 'discontinued' : ''}" ${rd ? '' : 'contenteditable="true" onblur="saveField(this, \'품명\')"'}>${item.품명 || ''}</h3>
                         <div class="title-actions">
                             <button class="action-btn add" onclick="triggerUpload(${globalIndex})" title="이미지 추가">+</button>
                             <button class="action-btn del" onclick="toggleDeleteMode()" title="이미지 삭제">-</button>
@@ -282,6 +282,14 @@ window.updateStatus = async function updateStatus(radio) {
     const card = radio.closest('.result-card');
     const meta = JSON.parse(card.dataset.meta);
     const status = radio.value;
+    
+    // UI Feedback: Toggle discontinued class
+    const title = card.querySelector('.card-title');
+    if (status === '단종') {
+        title.classList.add('discontinued');
+    } else {
+        title.classList.remove('discontinued');
+    }
     
     await fetch(`${API_BASE}/update`, {
         method: 'POST',
