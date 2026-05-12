@@ -1,4 +1,4 @@
-const API_BASE = 'https://aqua-pasco.onrender.com';
+const API_BASE = window.location.origin;
 
 const elements = {
     sheetSelect: document.getElementById('sheetSelect'),
