@@ -965,7 +965,7 @@ body.bulk-delete-active #bulkDeleteBtn {
 
 .model-editor-popup-minimal {
     position: absolute;
-    background: rgba(15, 23, 42, 0.3); /* 30% opacity */
+    background: rgba(15, 23, 42, 0.7); /* 70% opacity = 30% transparent */
     backdrop-filter: blur(8px);
     border: 1px solid var(--primary);
     border-radius: 12px;
@@ -988,6 +988,32 @@ body.bulk-delete-active #bulkDeleteBtn {
     overflow: hidden; /* No scrollbars */
     display: block;
 }
+
+/* Read-only View Popup */
+.model-view-popup {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.7); /* 70% opacity = 30% transparent */
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--primary);
+    border-radius: 12px;
+    padding: 12px 16px;
+    width: 320px;
+    max-width: 90vw;
+    z-index: 2000;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+    color: white;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.5;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 
 .search-section {
     margin-bottom: 2rem;

@@ -707,8 +707,8 @@ function logout() {
 }
 
 // Event Listeners
-function openModelEditor(el, itemId) {
-    if (document.body.classList.contains('read-only-mode')) return;
+window.openModelEditor = function openModelEditor(el, itemId) {
+    const isReadOnly = document.body.classList.contains('read-only-mode');
     
     const existing = document.getElementById('floating-model-editor');
     if (existing) existing.remove();
@@ -717,51 +717,58 @@ function openModelEditor(el, itemId) {
     const rect = el.getBoundingClientRect();
     const editor = document.createElement('div');
     editor.id = 'floating-model-editor';
-    editor.className = 'model-editor-popup-minimal'; 
+    editor.className = isReadOnly ? 'model-view-popup' : 'model-editor-popup-minimal'; 
     
     // Position near the element
     editor.style.left = `${Math.max(10, rect.left + window.scrollX - 20)}px`;
     editor.style.top = `${rect.top + window.scrollY - 60}px`;
     
-    editor.innerHTML = `
-        <textarea id="model-textarea" placeholder="사용모델 입력...">${currentModel}</textarea>
-    `;
+    if (isReadOnly) {
+        editor.textContent = currentModel || '내용 없음';
+    } else {
+        editor.innerHTML = `
+            <textarea id="model-textarea" placeholder="사용모델 입력...">${currentModel}</textarea>
+        `;
+    }
+    
     document.body.appendChild(editor);
     
-    const textarea = editor.querySelector('#model-textarea');
-    textarea.focus();
-    const len = textarea.value.length;
-    textarea.setSelectionRange(len, len);
-    
-    const saveModel = async () => {
-        const newModel = textarea.value.trim();
-        await fetch(`${API_BASE}/update`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: itemId, field: '사용모델', value: newModel, userId: currentUser ? currentUser.id : '' })
-        });
-        el.setAttribute('data-model', newModel);
-        el.querySelector('.model-text').textContent = newModel;
-        el.querySelector('.model-count').textContent = newModel.length;
-        editor.remove();
-    };
-
-    const autoResize = () => {
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
-    };
-
-    textarea.addEventListener('input', autoResize);
-    autoResize(); // Initial resize
-    
-    textarea.onkeydown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            saveModel();
-        } else if (e.key === 'Escape') {
+    if (!isReadOnly) {
+        const textarea = editor.querySelector('#model-textarea');
+        textarea.focus();
+        const len = textarea.value.length;
+        textarea.setSelectionRange(len, len);
+        
+        const saveModel = async () => {
+            const newModel = textarea.value.trim();
+            await fetch(`${API_BASE}/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: itemId, field: '사용모델', value: newModel, userId: currentUser ? currentUser.id : '' })
+            });
+            el.setAttribute('data-model', newModel);
+            el.querySelector('.model-text').textContent = newModel;
+            el.querySelector('.model-count').textContent = newModel.length;
             editor.remove();
-        }
-    };
+        };
+
+        const autoResize = () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        };
+
+        textarea.addEventListener('input', autoResize);
+        autoResize(); // Initial resize
+        
+        textarea.onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                saveModel();
+            } else if (e.key === 'Escape') {
+                editor.remove();
+            }
+        };
+    }
 
     // Close when clicking outside
     setTimeout(() => {
