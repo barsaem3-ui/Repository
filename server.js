@@ -65,7 +65,9 @@ app.get('/search', async (req, res) => {
         }
         
         if (query) {
-            dbQuery = dbQuery.or(`product_name.ilike.%${query}%,item_code.ilike.%${query}%,model.ilike.%${query}%,sheet_name.ilike.%${query}%`);
+            // 띄어쓰기에 상관없이 검색되도록 각 글자 사이에 % 기호를 삽입합니다. (예: "가스 3구" -> "가%스%3%구")
+            const flexibleQuery = query.replace(/\s+/g, '').split('').join('%');
+            dbQuery = dbQuery.or(`product_name.ilike.%${flexibleQuery}%,item_code.ilike.%${flexibleQuery}%,model.ilike.%${flexibleQuery}%,sheet_name.ilike.%${flexibleQuery}%`);
         }
         
         const { data, error } = await dbQuery.order('row_index', { ascending: true });
