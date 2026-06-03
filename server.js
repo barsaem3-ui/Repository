@@ -222,7 +222,7 @@ app.post('/add-item', async (req, res) => {
             price: item.가격,
             item_code: item.자재코드,
             model: item.사용모델,
-            modifier: userId,
+            modifier: item.memo || '', // userId 대신 입력한 메모 내용을 저장
             row_index: 9999, // Placeholder for new items
             status_sell_ok: item.status === '판매가능' ? 1 : 0,
             status_repair_sell: item.status === '수리판매' ? 1 : 0,
