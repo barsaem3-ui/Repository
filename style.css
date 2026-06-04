@@ -1204,7 +1204,7 @@ body.bulk-delete-active #bulkDeleteBtn {
 
 /* 라디오 버튼 + label 모두 클릭 차단 */
 .read-only-mode .status-opt {
-    pointer-events: none !important;
+    /* pointer-events: none을 제거하여 마우스 오버 시 title(설명)이 나오게 함 */
     cursor: default !important;
 }
 
